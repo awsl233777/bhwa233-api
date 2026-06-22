@@ -394,8 +394,8 @@
                 </button>
               </div>
               <span class="muted"
-                >支持直接粘贴剪贴板图片；需要管理 key，图片请控制在 8MB
-                内。</span
+                >支持直接粘贴剪贴板图片；有管理 key 时上传为 URL，无 key 时转为
+                Base64，图片请控制在 8MB 内。</span
               >
             </label>
             <div class="actions">
@@ -646,11 +646,19 @@
 
       async function uploadImageFile(file, sourceLabel) {
         assertUploadableImage(file);
+        const dataUrl = await fileToDataUrl(file);
+
         if (!hasManagementKey()) {
-          throw new Error('上传图片需要先填写管理 x-command-key');
+          document.getElementById('imageUrl').value = dataUrl;
+          renderPreview({ type: 'image', content: dataUrl });
+          setStatus(
+            formStatus,
+            `${sourceLabel}已转为 Base64 并回填；填写管理 key 后可上传为 URL`,
+            'success',
+          );
+          return;
         }
 
-        const dataUrl = await fileToDataUrl(file);
         const result = await request('/api/command/config/upload-image', {
           method: 'POST',
           headers: getHeaders(false),
